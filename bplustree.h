@@ -7,6 +7,7 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <string>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ public:
     Node* parent;
 
     vector<Node*> children;
-    vector<vector<string>> values;
+    vector<vector<string>> values;                      // 当前结点中存储的数据库记录
     Node* next;
     Node* prev;
 
@@ -45,7 +46,7 @@ public:
     int maxCapacity;
     int minCapacity;
     int depth;
-    int numRows;                                        // 数据库记录条数
+    int numRows;                                        // 数据库表记录条数
 
     BPlusTree(int _maxCapacity = 4);
 
@@ -53,7 +54,7 @@ public:
     Node* findFrontLeaf();                              // 获取起始叶子结点
     Node* findBackLeaf();                               // 获取终止叶子结点
     vector<string> get(int);
-    void insert(int, vector<string>&);
+    bool insert(int, vector<string>&);
     void update(int, vector<string>&);
     //void select(int, int);
     void insertNode(tuple<int, Node*, Node*>);
@@ -73,21 +74,3 @@ public:
 
 #endif  // BPLUSTREE_H
 
-
-//int main() {
-//    BPlusTree tree(2);
-//
-//    vector<int> insert_list = { 5, 15, 25, 35, 45, 55, 40, 30, 20 };
-//    for (const int i : insert_list) {
-//        tree.insert(i, i);
-//    }
-//
-//    vector<int> remove_list = { 40, 5, 45, 35, 25, 55 };
-//    for (const int i : remove_list) {
-//        tree.remove(i);
-//    }
-//
-//    tree.print();
-//
-//    return 0;
-//}

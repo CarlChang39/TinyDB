@@ -82,7 +82,9 @@ vector<string> Node::get(int key) {
     }
 
     if (index == -1) {
-        cout << "key " << key << " not found" << endl;
+        //cout << "key " << key << " not found" << endl;
+        vector<string> tmp;
+        return tmp;
     }
 
     return values[index];
@@ -91,10 +93,11 @@ vector<string> Node::get(int key) {
 bool Node::insert(int key, vector<string>& value) {
     int i = indexOfChild(key);
     if (find(keys.begin(), keys.end(), key) != keys.end()) {
-        cout << "Insert Error: duplicate keys!" << endl;
+        // cout << "Insert Error: duplicate keys!" << endl;
         return false;
     }
     keys.insert(keys.begin() + i, key);
+    // 插入新行
     values.insert(values.begin() + i, value);
     return true;
 }
@@ -165,7 +168,7 @@ vector<string> BPlusTree::get(int key) {
     return findLeaf(key)->get(key); 
 }
 
-void BPlusTree::insert(int key, vector<string>& value) {
+bool BPlusTree::insert(int key, vector<string>& value) {
     Node* leaf = findLeaf(key);
     if (leaf->insert(key, value) == true) {
         // 插入成功，记录数++
@@ -173,11 +176,12 @@ void BPlusTree::insert(int key, vector<string>& value) {
     }
     else {
         // 插入记录的key和已有key重复，插入失败
-        exit(0);
+        return false;
     }
     if (leaf->keys.size() > maxCapacity) {
         insertNode(leaf->splitLeaf());
     }
+    return true;
 }
 
 void BPlusTree::update(int key, vector<string>& value) {
@@ -464,7 +468,10 @@ void BPlusTree::print(Node* node, string _prefix, bool _last) {
         node = root;
     cout << _prefix << "? [";
     for (int i = 0; i < node->keys.size(); i++) {
-        cout << node->keys[i];
+        cout << to_string(node->keys[i]);
+        if (node->isLeaf) {
+            cout << "-" << node->values[i][0] << "-" << node->values[i][1];
+        }
         if (i != node->keys.size() - 1) {
             cout << ", ";
         }
