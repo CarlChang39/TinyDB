@@ -66,6 +66,9 @@ void Server::start() {
 		else if (input.starts_with("DELETE FROM TABLE")) {
 			dealDelete(input);
 		}
+		else if (input.starts_with("SAVE TABLE")) {
+			dealSaveTable(input);
+		}
 
 		// 退出数据库
 		else if (input == "EXIT") {
@@ -658,6 +661,95 @@ bool Server::dealDelete(const string& input) {
 	return true;
 }
 
+// 保存表信息到指定地址
+bool Server::dealSaveTable(const string& input) {
+	if (database == nullptr) {
+		// 未选定数据库
+		cerr << "Save table error: You have to select a database first." << endl;
+		return false;
+	}
+
+	vector<string> words;
+	parseSentence(input, words);
+	int size = words.size();
+
+	if (size == 7 && words[3] == "PATH" && words[5] == "AS") {
+		string tablename = words[2];
+		string path = words[4];
+		string format = words[6];
+
+		if (!filesystem::exists(path)) {
+			cerr << "Save table error: Save path doesn't exist." << endl;
+			return false;
+		}
+		if (format != "txt" && format != "csv") {
+			cerr << "Save table error: Table can only be saved as txt or csv." << endl;
+			return false;
+		}
+		if (!database->loadTable(tablename)) {
+			cerr << "Save table error: Failed loading table." << endl;
+			return false;
+		}
+
+		Table* table = database->openedTables[tablename + ".table"];
+
+		vector<vector<string>> rows;
+		table->getRows(rows);
+
+		// 保存到目标路径
+		if (!path.ends_with("\\")) {
+			path = path + "\\";
+		}
+		ofstream outputFile(path + tablename + "." + format);
+
+		if (outputFile.is_open()) {
+			for (size_t i = 0; i < table->column.size(); i++) {
+				outputFile << table->column[i];
+				if (i < table->column.size() - 1) {
+					outputFile << ",";
+				}
+			}
+			outputFile << "\n";
+			for (const vector<string>& row : rows) {
+				for (size_t i = 0; i < row.size(); i++) {
+					outputFile << row[i];
+					if (i < row.size() - 1) {
+						outputFile << ",";
+					}
+				}
+				outputFile << "\n";
+			}
+
+			outputFile.close();
+
+			cout << "Table saved to path " << path + tablename + "." + format << " successfully." << endl;
+
+			// 释放空间
+			delete table;
+
+			// 从openedTables里删除该表
+			database->openedTables.erase(tablename + ".table");
+		}
+		else {
+			cerr << "Save table error: Unable to open table file." << endl;
+
+			// 释放空间
+			delete table;
+
+			// 从openedTables里删除该表
+			database->openedTables.erase(tablename + ".table");
+
+			return false;
+		}
+	}
+	else {
+		cerr << "Save table error: Invalid syntex." << endl;
+		return false;
+	}
+
+	return true;
+}
+
 // 显示当前存在的用户
 bool Server::dealShowUsers() {
 	for (const auto& account : accountInfo) {
@@ -743,6 +835,16 @@ void Server::parseSentence(const string& input, vector<string>& words) {
 }
 
 Server::Server() {
+	wstring databasePath = L"database";
+	if (!filesystem::exists(databasePath)) {
+		if (CreateDirectory(databasePath.c_str(), NULL) ||
+			ERROR_ALREADY_EXISTS == GetLastError()) {
+			//cout << "Database home path created successfully." << endl;
+		}
+		else {
+			cerr << "Server init error: Can't create database home path." << endl;
+		}
+	}
 }
 
 Server::~Server() {

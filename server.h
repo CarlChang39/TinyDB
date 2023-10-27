@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <cstdio>
+#include <filesystem>
 #include <unordered_map>
 
 #include "database.h"
@@ -59,6 +60,9 @@ public:
 	bool dealSelect(const string&);						// 查看数据
 	/* DELETE FROM TABLE tablename WHERE id:1 */
 	bool dealDelete(const string&);						// 删除数据
+
+	/* SAVE TABLE tablename PATH path AS txt/csv */
+	bool dealSaveTable(const string&);								// 保存表信息到指定地址
 
 };
 
