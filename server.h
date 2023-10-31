@@ -15,8 +15,14 @@
 
 #include "database.h"
 #include "config.h"
+#include "md5.h"
+#include "hex.h"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 using namespace std;
+using namespace CryptoPP;
+using namespace cv;
 
 class Server {
 	unordered_map<string, string> accountInfo;
@@ -65,6 +71,11 @@ public:
 
 	/* SAVE TABLE tablename PATH path AS txt/csv */
 	bool dealSaveTable(const string&);					// 保存表信息到指定地址
+
+	/* SHOW PICTURE pictureName */
+	bool dealShowPicture(const string&);				// 查看图片
+	/* SHOW VIDEO videoName */
+	bool dealShowVideo(const string&);					// 查看流媒体
 
 };
 

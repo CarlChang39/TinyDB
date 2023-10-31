@@ -67,8 +67,18 @@ void Server::start() {
 		else if (input.starts_with("DELETE FROM TABLE")) {
 			dealDelete(input);
 		}
+		// 保存数据
 		else if (input.starts_with("SAVE TABLE")) {
 			dealSaveTable(input);
+		}
+
+		// 查看图片
+		else if (input.starts_with("SHOW PICTURE")) {
+			dealShowPicture(input);
+		}
+		// 查看流媒体
+		else if (input.starts_with("SHOW VIDEO")) {
+			dealShowVideo(input);
 		}
 
 		// 退出数据库
@@ -106,7 +116,7 @@ bool Server::dealCreateUser(const string& input) {
 		} 
 		
 		// 保存用户名密码信息
-		string password = words[4];
+		string password = md5(words[4]);
 		accountInfo[username] = password;
 		saveAccountInfo();
 		cout << "User created successfully." << endl;
@@ -149,7 +159,7 @@ bool Server::dealDropUser(const string& input) {
 			return false;
 		}
 
-		string password = words[4];
+		string password = md5(words[4]);
 		if (password != accountInfo[username]) {
 			// 密码不正确
 			cerr << "Drop user error: Wrong password." << endl;
@@ -216,7 +226,7 @@ bool Server::dealUseUser(const string& input) {
 			return false;
 		}
 
-		string password = words[4];
+		string password = md5(words[4]);
 		if (password != accountInfo[username]) {
 			// 密码不正确
 			cerr << "Use user error: Wrong password." << endl;
@@ -796,6 +806,96 @@ bool Server::dealShowViews() {
 	return true;
 }
 
+// 查看图片
+bool Server::dealShowPicture(const string& input) {
+	if (database == nullptr) {
+		// 未选定数据库
+		cerr << "Show picture error: You have to select a database first." << endl;
+		return false;
+	}
+	
+	vector<string> words;
+	parseSentence(input, words);
+	int size = words.size();
+
+	if (size == 3) {
+		string filename = words[2];
+		string filePath = "database\\" + database->owner + "\\" + filename;
+
+		if (!filesystem::exists(filePath)) {
+			cerr << "Show picture error: File doesn't exist." << endl;
+			return false;
+		}
+
+		// 读取图像
+		Mat image = imread(filePath);
+
+		// 检查图像是否成功加载
+		if (image.empty()) {
+			cerr << "Show picture error: Could not open or find the image" << endl;
+			return false;
+		}
+
+		// 在窗口中显示图像
+		imshow("Image", image);
+
+		waitKey(0);
+	}
+	else {
+		cerr << "Show picture error: Invalid syntex." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+// 查看流媒体
+bool Server::dealShowVideo(const string& input) {
+	if (database == nullptr) {
+		// 未选定数据库
+		cerr << "Show picture error: You have to select a database first." << endl;
+		return false;
+	}
+	
+	vector<string> words;
+	parseSentence(input, words);
+	int size = words.size();
+
+	if (size == 3) {
+		string filename = words[2];
+		string filePath = "database\\" + database->owner + "\\" + filename;
+
+		// 打开视频
+		VideoCapture cap(filePath);
+
+		// 检查视频是否成功打开
+		if (!cap.isOpened()) {
+			cerr << "Show video error: Could not open or find the video" << endl;
+			return false;
+		}
+
+		// 读取和显示视频帧
+		Mat frame;
+		while (cap.read(frame)) {
+			imshow("Video", frame);
+
+			// 按下ESC键退出
+			if (waitKey(30) == 27)
+				break;
+		}
+
+		// 关闭视频流
+		cap.release();
+		destroyAllWindows();
+	}
+	else {
+		cerr << "Show video error: Invalid syntex." << endl;
+		return false;
+	}
+
+	return true;
+}
+
 // 加载账号密码信息
 bool Server::loadAccountInfo() {
 	ifstream file("./account.txt");
@@ -843,6 +943,17 @@ void Server::parseSentence(const string& input, vector<string>& words) {
 		words.push_back(word);
 	}
 }
+
+string Server::md5(const string& password) {
+	std::string digest;
+	CryptoPP::Weak1::MD5 md5;
+	CryptoPP::HashFilter hashfilter(md5);
+	hashfilter.Attach(new CryptoPP::HexEncoder(new CryptoPP::StringSink(digest), false));
+	hashfilter.Put(reinterpret_cast<const unsigned char*>(password.c_str()), password.length());
+	hashfilter.MessageEnd();
+	return digest;
+}
+
 
 Server::Server() {
 	wstring databasePath = L"database";
