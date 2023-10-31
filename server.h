@@ -27,7 +27,9 @@ public:
 	~Server();
 
 	void start();
+	void printPrompt();
 	void parseSentence(const string&, vector<string>&);
+	string md5(const string&);
 
 	bool loadAccountInfo();
 	bool saveAccountInfo();
@@ -62,7 +64,7 @@ public:
 	bool dealDelete(const string&);						// 删除数据
 
 	/* SAVE TABLE tablename PATH path AS txt/csv */
-	bool dealSaveTable(const string&);								// 保存表信息到指定地址
+	bool dealSaveTable(const string&);					// 保存表信息到指定地址
 
 };
 

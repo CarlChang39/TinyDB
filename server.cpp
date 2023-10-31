@@ -1,11 +1,12 @@
 #include "server.h"
 
 void Server::start() {
+	// 加载用户名-密码文件
 	loadAccountInfo();
 
 	while (true) {
 		// 打印提示信息
-		cout << "TinyDB > ";
+		printPrompt();
 
 		// 获取用户输入
 		string input;
@@ -79,6 +80,15 @@ void Server::start() {
 		else {
 			cerr << "Unrecognized command. Please check your input." << endl;
 		}
+	}
+}
+
+void Server::printPrompt() {
+	if (database != nullptr) {
+		cout << database->owner << " > ";
+	}
+	else {
+		cout << "TinyDB > ";
 	}
 }
 
