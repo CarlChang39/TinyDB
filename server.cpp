@@ -3,7 +3,7 @@
 void Server::start() {
 	// 加载用户名-密码文件
 	loadAccountInfo();
-
+	string buffer = "";
 	while (true) {
 		// 打印提示信息
 		printPrompt();
@@ -12,6 +12,18 @@ void Server::start() {
 		string input;
 		getline(cin, input);
 		int length = input.length();
+
+		if (!input.ends_with(";")){
+			// 存入缓存
+			buffer = buffer + input;
+			continue;
+		}
+		else {
+			// 存入缓存
+			input = buffer + input.substr(0, length-1);
+			// 清空缓存
+			buffer = "";
+		}
 
 		// 创建用户（数据库）
 		if (input.starts_with("CREATE USER")) {
@@ -114,9 +126,8 @@ bool Server::dealCreateUser(const string& input) {
 			cerr << "Create user error: User already exist." << endl;
 			return false;
 		} 
-		
 		// 保存用户名密码信息
-		string password = md5(words[4]);
+		string password = sha256(words[4]);
 		accountInfo[username] = password;
 		saveAccountInfo();
 		cout << "User created successfully." << endl;
@@ -159,7 +170,7 @@ bool Server::dealDropUser(const string& input) {
 			return false;
 		}
 
-		string password = md5(words[4]);
+		string password = sha256(words[4]);
 		if (password != accountInfo[username]) {
 			// 密码不正确
 			cerr << "Drop user error: Wrong password." << endl;
@@ -226,7 +237,7 @@ bool Server::dealUseUser(const string& input) {
 			return false;
 		}
 
-		string password = md5(words[4]);
+		string password = sha256(words[4]);
 		if (password != accountInfo[username]) {
 			// 密码不正确
 			cerr << "Use user error: Wrong password." << endl;
@@ -954,6 +965,21 @@ string Server::md5(const string& password) {
 	return digest;
 }
 
+// 将输入的字符串通过SHA-256算法加密
+string Server::sha256(const string& password) {
+	std::string digest;
+	// 创建SHA-256哈希对象
+	CryptoPP::SHA256 sha256;
+	// 计算哈希值
+	CryptoPP::byte hash[CryptoPP::SHA256::DIGESTSIZE];
+	sha256.CalculateDigest(hash, reinterpret_cast<CryptoPP::byte*>(const_cast<char*>(password.c_str())), password.length());
+	// 使用HexEncoder过滤器将哈希值转换为十六进制字符串
+	CryptoPP::HexEncoder encoder;
+	encoder.Attach(new CryptoPP::StringSink(digest));
+	encoder.Put(hash, sizeof(hash));
+	encoder.MessageEnd();
+	return digest;
+}
 
 Server::Server() {
 	wstring databasePath = L"database";

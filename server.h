@@ -17,6 +17,8 @@
 #include "config.h"
 #include "md5.h"
 #include "hex.h"
+#include "sha.h"
+#include "filters.h"
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
@@ -36,6 +38,7 @@ public:
 	void printPrompt();
 	void parseSentence(const string&, vector<string>&);
 	string md5(const string&);
+	string sha256(const string&);
 
 	bool loadAccountInfo();
 	bool saveAccountInfo();
