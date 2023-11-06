@@ -19,6 +19,11 @@ void Server::start() {
 		if (!input.ends_with(";")){
 			// 存入缓存
 			buffer = buffer + input;
+			// 限制长度
+			if (buffer.size() > 1000) {
+				cerr << "Command is too long and must end with ; Please check your input." << endl;
+				buffer = "";
+			}
 			continue;
 		}
 		else {
