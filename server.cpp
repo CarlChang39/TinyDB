@@ -4,6 +4,9 @@ void Server::start() {
 	// 加载用户名-密码文件
 	loadAccountInfo();
 	string buffer = "";
+	//不输出error之外的信息
+	utils::logging::setLogLevel(utils::logging::LOG_LEVEL_ERROR);//静默 utils::logging::LOG_LEVEL_SILENT
+
 	while (true) {
 		// 打印提示信息
 		printPrompt();
@@ -11,7 +14,7 @@ void Server::start() {
 		// 获取用户输入
 		string input;
 		getline(cin, input);
-		int length = input.length();
+		size_t length = input.length();
 
 		if (!input.ends_with(";")){
 			// 存入缓存
@@ -83,7 +86,10 @@ void Server::start() {
 		else if (input.starts_with("SAVE TABLE")) {
 			dealSaveTable(input);
 		}
-
+		// 导入数据
+		else if (input.starts_with("IMPORT TABLE")) {
+			dealImportTable(input);
+		}
 		// 查看图片
 		else if (input.starts_with("SHOW PICTURE")) {
 			dealShowPicture(input);
@@ -92,10 +98,12 @@ void Server::start() {
 		else if (input.starts_with("SHOW VIDEO")) {
 			dealShowVideo(input);
 		}
-
+		else if (input == "HELP") {
+			dealHelp();
+		}
 		// 退出数据库
 		else if (input == "EXIT") {
-			cout << "Bye!" << endl;
+			std::cout << "Bye!" << endl;
 			break;
 		}
 		// 非法输入
@@ -268,7 +276,7 @@ bool Server::dealCreateTable(const string& input) {
 
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 	
 	if (size < 6) {
 		cerr << "Create table error: Wrong syntex." << endl;
@@ -290,7 +298,7 @@ bool Server::dealCreateTable(const string& input) {
 		// 解析用户想要定义的dataType和column，同时设置属性到存储下标的映射
 		vector<string> dataTypeString;
 		vector<string> column;
-		unordered_map<string, int> column2index;
+		unordered_map<string, size_t> column2index;
 		for (int i = 3; i < size - 2; i++) {
 			size_t pos = words[i].find(':');
 			if (pos == string::npos) {
@@ -502,7 +510,7 @@ bool Server::dealInsert(const string& input) {
 
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 
 	if (size < 5) {
 		cerr << "Insert into table error: Wrong syntex." << endl;
@@ -573,7 +581,7 @@ bool Server::dealSelect(const string& input) {
 
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 
 	if (size >= 5 && words[2] == "FROM" && words[3] == "TABLE") {
 		string target = words[1];
@@ -630,7 +638,7 @@ bool Server::dealDelete(const string& input) {
 
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 
 	if (size == 6 && words[size - 2] == "WHERE") {
 		string tablename = words[3];
@@ -702,7 +710,7 @@ bool Server::dealSaveTable(const string& input) {
 
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 
 	if (size == 7 && words[3] == "PATH" && words[5] == "AS") {
 		string tablename = words[2];
@@ -732,12 +740,16 @@ bool Server::dealSaveTable(const string& input) {
 			path = path + "\\";
 		}
 		ofstream outputFile(path + tablename + "." + format);
-
+		char delimiter;
+		if (format == "txt")
+			delimiter = ' ';
+		else
+			delimiter = ',';
 		if (outputFile.is_open()) {
 			for (size_t i = 0; i < table->column.size(); i++) {
 				outputFile << table->column[i];
 				if (i < table->column.size() - 1) {
-					outputFile << ",";
+					outputFile << delimiter;
 				}
 			}
 			outputFile << "\n";
@@ -745,7 +757,7 @@ bool Server::dealSaveTable(const string& input) {
 				for (size_t i = 0; i < row.size(); i++) {
 					outputFile << row[i];
 					if (i < row.size() - 1) {
-						outputFile << ",";
+						outputFile << delimiter;
 					}
 				}
 				outputFile << "\n";
@@ -778,6 +790,83 @@ bool Server::dealSaveTable(const string& input) {
 		return false;
 	}
 
+	return true;
+}
+
+// 导出数据
+bool Server::dealImportTable(const string& input){
+	if (database == nullptr) {
+		// 未选定数据库
+		cerr << "Save table error: You have to select a database first." << endl;
+		return false;
+	}
+	vector<string> words;
+	parseSentence(input, words);
+	size_t size = words.size();
+
+	if (size == 7 && words[3] == "PATH" && words[5] == "BY") {
+		string tablename = words[2];
+		string path = words[4];
+		string format = words[6];
+
+		if (!filesystem::exists(path)) {
+			cerr << "Import table error: Import path doesn't exist." << endl;
+			return false;
+		}
+		if (format != "txt" && format != "csv") {
+			cerr << "Import table error: Table can only be import by txt or csv." << endl;
+			return false;
+		}
+		// 按行将文本读取到lines中
+		std::vector<std::string> lines; // 存储每行的字符串
+		std::ifstream inputFile(path);
+		if (inputFile.is_open()) {
+			std::string line;
+			while (std::getline(inputFile, line)) {
+				lines.push_back(line); // 将每行添加到字符串向量中
+			}
+			inputFile.close(); // 关闭文件
+		}
+		else {
+			std::cerr << "Import table error: File can't be opened" << std::endl;
+			return false;
+		}
+
+		// 分隔符
+		char delimiter;
+		if (format == "txt")
+			delimiter = ' ';
+		else
+			delimiter = ',';
+
+		// 第一行为列名
+		string column;
+		std::vector<std::string> columns;
+		parseSentence(lines[0], columns, delimiter);
+		size_t num_col = columns.size();
+		//遍历每一行,从第二行开始
+		for (size_t i = 1; i < lines.size(); i++) {
+			//分割
+			std::vector<std::string> row;
+			parseSentence(lines[i], row, delimiter);
+			if (row.size() != num_col) {
+				std::cerr << "Import table error: Wrong number of columns" << std::endl;
+				return false;
+			}
+			//格式INSERT INTO TABLE t_nzx id:1 name:NZX;
+			string sql = "INSERT INTO TABLE " + tablename;
+			for (size_t j = 0; j < num_col; j++) {
+				sql += " " + columns[j] + ":" + row[j];
+			}
+			dealInsert(sql);
+		}
+		std::cout << "Import TABLE " + tablename + " from " + path + " format " + format + " sucessfully." << endl;
+	}
+	else {
+		cerr << "Save table error: Invalid syntex." << endl;
+		return false;
+	}
+	
 	return true;
 }
 
@@ -827,7 +916,7 @@ bool Server::dealShowPicture(const string& input) {
 	
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 
 	if (size == 3) {
 		string filename = words[2];
@@ -837,20 +926,12 @@ bool Server::dealShowPicture(const string& input) {
 			cerr << "Show picture error: File doesn't exist." << endl;
 			return false;
 		}
-
-		// 读取图像
-		Mat image = imread(filePath);
-
-		// 检查图像是否成功加载
-		if (image.empty()) {
-			cerr << "Show picture error: Could not open or find the image" << endl;
-			return false;
-		}
-
-		// 在窗口中显示图像
-		imshow("Image", image);
-
+		// 创建类对象 COpenCVWindowExt
+		COpenCVWindowExt img_window("img");
+		img_window.ImRead(filePath);
 		waitKey(0);
+		//按任意键关闭窗口
+		destroyAllWindows();
 	}
 	else {
 		cerr << "Show picture error: Invalid syntex." << endl;
@@ -864,13 +945,13 @@ bool Server::dealShowPicture(const string& input) {
 bool Server::dealShowVideo(const string& input) {
 	if (database == nullptr) {
 		// 未选定数据库
-		cerr << "Show picture error: You have to select a database first." << endl;
+		cerr << "Show video error: You have to select a database first." << endl;
 		return false;
 	}
 	
 	vector<string> words;
 	parseSentence(input, words);
-	int size = words.size();
+	size_t size = words.size();
 
 	if (size == 3) {
 		string filename = words[2];
@@ -878,7 +959,6 @@ bool Server::dealShowVideo(const string& input) {
 
 		// 打开视频
 		VideoCapture cap(filePath);
-
 		// 检查视频是否成功打开
 		if (!cap.isOpened()) {
 			cerr << "Show video error: Could not open or find the video" << endl;
@@ -887,11 +967,23 @@ bool Server::dealShowVideo(const string& input) {
 
 		// 读取和显示视频帧
 		Mat frame;
-		while (cap.read(frame)) {
-			imshow("Video", frame);
-
+		bool isPaused = false;
+		while (true) {
+			if (!isPaused)
+			{
+				cap.read(frame);
+				if (frame.empty()) {
+					break;
+				}
+				imshow("Video", frame);
+			}
+				
+			// 按下空格暂停
+			auto key = waitKey(30);
+			if (key == 32)
+				isPaused = !isPaused;
 			// 按下ESC键退出
-			if (waitKey(30) == 27)
+			else if (key == 27)
 				break;
 		}
 
@@ -904,6 +996,32 @@ bool Server::dealShowVideo(const string& input) {
 		return false;
 	}
 
+	return true;
+}
+
+//显示帮助
+bool Server::dealHelp() {
+	std::cout << "Welcome to use our database system!" << endl;
+	std::cout << "You can use the following commands to operate the database system." << endl;
+	std::cout << "1. CREATE USER username PASSWORD password;" << endl;
+	std::cout << "2. DROP USER username PASSWORD password;" << endl;
+	std::cout << "3. USE USER username PASSWORD password;" << endl;
+	std::cout << "4. CREATE TABLE tablename col1:dataType col2:dataType ... PRIMARYKEY primaryKey;" << endl;
+	std::cout << "5. DROP TABLE tablename;" << endl;
+	std::cout << "6. SHOW TABLE tablename COLUMNS;" << endl;
+	std::cout << "7. SHOW TABLE tablename PRIMARYKEY;" << endl;
+	std::cout << "8. INSERT INTO TABLE tablename col1:value col2:value ...;" << endl;
+	std::cout << "9. SELECT ... FROM TABLE tablename (WHERE ...);" << endl;
+	std::cout << "10. DELETE FROM TABLE tablename WHERE primaryKey:value;" << endl;
+	std::cout << "11. SAVE TABLE tablename PATH path AS format;" << endl;
+	std::cout << "12. IMPORT TABLE tablename PATH path BY format;" << endl;
+	std::cout << "13. SHOW USERS;" << endl;
+	std::cout << "14. SHOW TABLES;" << endl;
+	std::cout << "15. SHOW VIEWS;" << endl;
+	std::cout << "16. SHOW PICTURE filename;" << endl;
+	std::cout << "17. SHOW VIDEO filename;" << endl;
+	std::cout << "18. EXIT;" << endl;
+	std::cout << "19. HELP;" << endl;
 	return true;
 }
 
@@ -951,6 +1069,15 @@ void Server::parseSentence(const string& input, vector<string>& words) {
 	
 	string word;
 	while (ss >> word) {
+		words.push_back(word);
+	}
+}
+
+// 按分隔符分割句子
+void Server::parseSentence(const string& input, vector<string>& words, const char& delimiter) {
+	istringstream ss(input);
+	string word;
+	while (std::getline(ss, word, delimiter)) {
 		words.push_back(word);
 	}
 }

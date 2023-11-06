@@ -14,6 +14,7 @@
 #include <unordered_map>
 
 #include "database.h"
+#include "OpenCVWindowExt.h"
 #include "config.h"
 #include "md5.h"
 #include "hex.h"
@@ -21,6 +22,7 @@
 #include "filters.h"
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core/utils/logger.hpp"
 
 using namespace std;
 using namespace CryptoPP;
@@ -37,9 +39,10 @@ public:
 	void start();
 	void printPrompt();
 	void parseSentence(const string&, vector<string>&);
+	void parseSentence(const string&, vector<string>&, const char&);
 	string md5(const string&);
 	string sha256(const string&);
-
+	
 	bool loadAccountInfo();
 	bool saveAccountInfo();
 
@@ -75,11 +78,14 @@ public:
 	/* SAVE TABLE tablename PATH path AS txt/csv */
 	bool dealSaveTable(const string&);					// 保存表信息到指定地址
 
+	/* IMPORT TABLE table PATH path BY txt/csv */
+	bool dealImportTable(const string& input);				// 导入表信息
 	/* SHOW PICTURE pictureName */
 	bool dealShowPicture(const string&);				// 查看图片
 	/* SHOW VIDEO videoName */
 	bool dealShowVideo(const string&);					// 查看流媒体
-
+	/* HELP*/
+	bool dealHelp();						// 帮助
 };
 
 #endif	// SERVER_H
