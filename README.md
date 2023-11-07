@@ -8,7 +8,7 @@ You can run the code by simply download this repository and open the .sln file u
 
 ## Dependencies
 This project uses 2 third-party librarys: 
-1. **cryptopp**, for user password encryption using md5.
+1. **cryptopp**, for user password encryption using md5 / sha-256.
 2. **opencv**, for showing pictures and playing videos.
 
 Please make sure that these files are present on your computer, and that the paths they are included from in your Visual Studio project are correct.
