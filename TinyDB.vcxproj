@@ -105,14 +105,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\cryptopp;C:\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\cryptopp;C:\opencv\build\include;%(AdditionalIncludeDirectories);./include/opencv/build/include;./include/cryptopp890;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\opencv\build\x64\vc15\lib;C:\cryptopp\x64\Output\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cryptlib.lib;opencv_world3410d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\opencv\build\x64\vc15\lib;C:\cryptopp\x64\Output\Debug;%(AdditionalLibraryDirectories);./include/cryptopp890/x64/Output/Debug;./include/opencv/build/x64/vc16/lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world480d.lib;cryptlib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -137,6 +137,7 @@
     <ClCompile Include="database.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="OpenCVWindowExt.cpp" />
     <ClCompile Include="server.cpp" />
     <ClCompile Include="table.cpp" />
   </ItemGroup>
@@ -145,6 +146,7 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="cursor.h" />
     <ClInclude Include="database.h" />
+    <ClInclude Include="OpenCVWindowExt.h" />
     <ClInclude Include="server.h" />
     <ClInclude Include="table.h" />
   </ItemGroup>

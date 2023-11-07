@@ -1,4 +1,6 @@
 .vs/
 x64/
-database/
+database/*
 account.txt
+Debug/
+include/*
