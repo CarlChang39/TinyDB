@@ -77,9 +77,8 @@ public:
 
 	/* SAVE TABLE tablename PATH path AS txt/csv */
 	bool dealSaveTable(const string&);					// 保存表信息到指定地址
-
-	/* IMPORT TABLE table PATH path BY txt/csv */
-	bool dealImportTable(const string& input);				// 导入表信息
+	/* IMPORT TABLE tablename PATH path BY txt/csv */
+	bool dealImportTable(const string& input);			// 导入表信息
 	/* SHOW PICTURE pictureName */
 	bool dealShowPicture(const string&);				// 查看图片
 	/* SHOW VIDEO videoName */

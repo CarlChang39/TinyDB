@@ -112,7 +112,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\opencv\build\x64\vc15\lib;C:\cryptopp\x64\Output\Debug;%(AdditionalLibraryDirectories);./include/cryptopp890/x64/Output/Debug;./include/opencv/build/x64/vc16/lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world480d.lib;cryptlib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world3410d.lib;cryptlib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

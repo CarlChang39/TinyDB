@@ -745,11 +745,13 @@ bool Server::dealSaveTable(const string& input) {
 			path = path + "\\";
 		}
 		ofstream outputFile(path + tablename + "." + format);
+
 		char delimiter;
 		if (format == "txt")
 			delimiter = ' ';
 		else
 			delimiter = ',';
+
 		if (outputFile.is_open()) {
 			for (size_t i = 0; i < table->column.size(); i++) {
 				outputFile << table->column[i];
@@ -798,11 +800,11 @@ bool Server::dealSaveTable(const string& input) {
 	return true;
 }
 
-// 导出数据
+// 导入表信息
 bool Server::dealImportTable(const string& input){
 	if (database == nullptr) {
 		// 未选定数据库
-		cerr << "Save table error: You have to select a database first." << endl;
+		cerr << "Import table error: You have to select a database first." << endl;
 		return false;
 	}
 	vector<string> words;
@@ -823,17 +825,17 @@ bool Server::dealImportTable(const string& input){
 			return false;
 		}
 		// 按行将文本读取到lines中
-		std::vector<std::string> lines; // 存储每行的字符串
-		std::ifstream inputFile(path);
+		vector<string> lines; // 存储每行的字符串
+		ifstream inputFile(path);
 		if (inputFile.is_open()) {
-			std::string line;
-			while (std::getline(inputFile, line)) {
+			string line;
+			while (getline(inputFile, line)) {
 				lines.push_back(line); // 将每行添加到字符串向量中
 			}
 			inputFile.close(); // 关闭文件
 		}
 		else {
-			std::cerr << "Import table error: File can't be opened" << std::endl;
+			cerr << "Import table error: File can't be opened" << endl;
 			return false;
 		}
 
@@ -844,18 +846,24 @@ bool Server::dealImportTable(const string& input){
 		else
 			delimiter = ',';
 
+		string fullPath = "database\\" + database->owner + "\\" + tablename + ".table";
+		if (!filesystem::exists(fullPath)) {
+			cerr << "Import table error: Target table you select to insert doesn't exist." << endl;
+			return false;
+		}
+
 		// 第一行为列名
 		string column;
-		std::vector<std::string> columns;
+		vector<string> columns;
 		parseSentence(lines[0], columns, delimiter);
 		size_t num_col = columns.size();
 		//遍历每一行,从第二行开始
 		for (size_t i = 1; i < lines.size(); i++) {
 			//分割
-			std::vector<std::string> row;
+			vector<string> row;
 			parseSentence(lines[i], row, delimiter);
 			if (row.size() != num_col) {
-				std::cerr << "Import table error: Wrong number of columns" << std::endl;
+				cerr << "Import table error: Wrong number of columns" << endl;
 				return false;
 			}
 			//格式INSERT INTO TABLE t_nzx id:1 name:NZX;
@@ -863,12 +871,15 @@ bool Server::dealImportTable(const string& input){
 			for (size_t j = 0; j < num_col; j++) {
 				sql += " " + columns[j] + ":" + row[j];
 			}
-			dealInsert(sql);
+			if (!dealInsert(sql)) {
+				cerr << "Import table error: Can't insert into table." << endl;
+				return false;
+			}
 		}
-		std::cout << "Import TABLE " + tablename + " from " + path + " format " + format + " sucessfully." << endl;
+		cout << "Import TABLE " + tablename + " from " + path + " format " + format + " sucessfully." << endl;
 	}
 	else {
-		cerr << "Save table error: Invalid syntex." << endl;
+		cerr << "Import table error: Invalid syntex." << endl;
 		return false;
 	}
 	
@@ -966,7 +977,7 @@ bool Server::dealShowVideo(const string& input) {
 		VideoCapture cap(filePath);
 		// 检查视频是否成功打开
 		if (!cap.isOpened()) {
-			cerr << "Show video error: Could not open or find the video" << endl;
+			cerr << "Show video error: Could not open or find the video." << endl;
 			return false;
 		}
 
@@ -1006,27 +1017,27 @@ bool Server::dealShowVideo(const string& input) {
 
 //显示帮助
 bool Server::dealHelp() {
-	std::cout << "Welcome to use our database system!" << endl;
-	std::cout << "You can use the following commands to operate the database system." << endl;
-	std::cout << "1. CREATE USER username PASSWORD password;" << endl;
-	std::cout << "2. DROP USER username PASSWORD password;" << endl;
-	std::cout << "3. USE USER username PASSWORD password;" << endl;
-	std::cout << "4. CREATE TABLE tablename col1:dataType col2:dataType ... PRIMARYKEY primaryKey;" << endl;
-	std::cout << "5. DROP TABLE tablename;" << endl;
-	std::cout << "6. SHOW TABLE tablename COLUMNS;" << endl;
-	std::cout << "7. SHOW TABLE tablename PRIMARYKEY;" << endl;
-	std::cout << "8. INSERT INTO TABLE tablename col1:value col2:value ...;" << endl;
-	std::cout << "9. SELECT ... FROM TABLE tablename (WHERE ...);" << endl;
-	std::cout << "10. DELETE FROM TABLE tablename WHERE primaryKey:value;" << endl;
-	std::cout << "11. SAVE TABLE tablename PATH path AS format;" << endl;
-	std::cout << "12. IMPORT TABLE tablename PATH path BY format;" << endl;
-	std::cout << "13. SHOW USERS;" << endl;
-	std::cout << "14. SHOW TABLES;" << endl;
-	std::cout << "15. SHOW VIEWS;" << endl;
-	std::cout << "16. SHOW PICTURE filename;" << endl;
-	std::cout << "17. SHOW VIDEO filename;" << endl;
-	std::cout << "18. EXIT;" << endl;
-	std::cout << "19. HELP;" << endl;
+	cout << "Welcome to use our database system!" << endl;
+	cout << "You can use the following commands to operate the database system." << endl;
+	cout << "1. CREATE USER username PASSWORD password;" << endl;
+	cout << "2. DROP USER username PASSWORD password;" << endl;
+	cout << "3. USE USER username PASSWORD password;" << endl;
+	cout << "4. CREATE TABLE tablename col1:dataType col2:dataType ... PRIMARYKEY primaryKey;" << endl;
+	cout << "5. DROP TABLE tablename;" << endl;
+	cout << "6. SHOW TABLE tablename COLUMNS;" << endl;
+	cout << "7. SHOW TABLE tablename PRIMARYKEY;" << endl;
+	cout << "8. INSERT INTO TABLE tablename col1:value col2:value ...;" << endl;
+	cout << "9. SELECT ... FROM TABLE tablename (WHERE ...);" << endl;
+	cout << "10. DELETE FROM TABLE tablename WHERE primaryKey:value;" << endl;
+	cout << "11. SAVE TABLE tablename PATH path AS format;" << endl;
+	cout << "12. IMPORT TABLE tablename PATH path BY format;" << endl;
+	cout << "13. SHOW USERS;" << endl;
+	cout << "14. SHOW TABLES;" << endl;
+	cout << "15. SHOW VIEWS;" << endl;
+	cout << "16. SHOW PICTURE filename;" << endl;
+	cout << "17. SHOW VIDEO filename;" << endl;
+	cout << "18. EXIT;" << endl;
+	cout << "19. HELP;" << endl;
 	return true;
 }
 
@@ -1088,10 +1099,10 @@ void Server::parseSentence(const string& input, vector<string>& words, const cha
 }
 
 string Server::md5(const string& password) {
-	std::string digest;
-	CryptoPP::Weak1::MD5 md5;
-	CryptoPP::HashFilter hashfilter(md5);
-	hashfilter.Attach(new CryptoPP::HexEncoder(new CryptoPP::StringSink(digest), false));
+	string digest;
+	Weak1::MD5 md5;
+	HashFilter hashfilter(md5);
+	hashfilter.Attach(new HexEncoder(new StringSink(digest), false));
 	hashfilter.Put(reinterpret_cast<const unsigned char*>(password.c_str()), password.length());
 	hashfilter.MessageEnd();
 	return digest;
@@ -1099,15 +1110,15 @@ string Server::md5(const string& password) {
 
 // 将输入的字符串通过SHA-256算法加密
 string Server::sha256(const string& password) {
-	std::string digest;
+	string digest;
 	// 创建SHA-256哈希对象
-	CryptoPP::SHA256 sha256;
+	SHA256 sha256;
 	// 计算哈希值
-	CryptoPP::byte hash[CryptoPP::SHA256::DIGESTSIZE];
+	CryptoPP::byte hash[SHA256::DIGESTSIZE];
 	sha256.CalculateDigest(hash, reinterpret_cast<CryptoPP::byte*>(const_cast<char*>(password.c_str())), password.length());
 	// 使用HexEncoder过滤器将哈希值转换为十六进制字符串
-	CryptoPP::HexEncoder encoder;
-	encoder.Attach(new CryptoPP::StringSink(digest));
+	HexEncoder encoder;
+	encoder.Attach(new StringSink(digest));
 	encoder.Put(hash, sizeof(hash));
 	encoder.MessageEnd();
 	return digest;
